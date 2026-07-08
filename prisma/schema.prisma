@@ -3,39 +3,25 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
-enum UserRole {
-  CUSTOMER
-  SELLER
-  ADMIN
-}
+// SQLite doesn't support enums, using String instead
+// UserRole: CUSTOMER, SELLER, ADMIN
 
-enum VendorStatus {
-  PENDING
-  APPROVED
-  REJECTED
-  SUSPENDED
-}
+// SQLite doesn't support enums, using String instead
+// VendorStatus: PENDING, APPROVED, REJECTED, SUSPENDED
 
-enum OrderStatus {
-  PENDING
-  CONFIRMED
-  PROCESSING
-  SHIPPED
-  DELIVERED
-  CANCELLED
-  REFUNDED
-}
+// SQLite doesn't support enums, using String instead
+// OrderStatus: PENDING, CONFIRMED, PROCESSING, SHIPPED, DELIVERED, CANCELLED, REFUNDED
 
 model User {
   id          String   @id @default(cuid())
   email       String   @unique
   password    String?
   name        String
-  role        UserRole @default(CUSTOMER)
+  role        String   @default("CUSTOMER")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
@@ -58,7 +44,7 @@ model Vendor {
   businessName String
   businessNumber String
   description String?
-  status      VendorStatus @default(PENDING)
+  status      String   @default("PENDING")
   
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -76,12 +62,12 @@ model Product {
   
   name        String
   description String
-  price       Decimal  @db.Decimal(10, 2)
+  price       Int      // Stored in cents (e.g., 10000 = ₩100.00)
   stock       Int      @default(0)
   
   // Categories
   category    String
-  tags        String[]
+  tags        String   // JSON string array
   
   // Status
   isActive    Boolean  @default(true)
@@ -100,12 +86,12 @@ model Order {
   user        User        @relation(fields: [userId], references: [id])
   
   orderNumber String      @unique
-  status      OrderStatus @default(PENDING)
+  status      String   @default("PENDING")
   
   // Pricing
-  subtotal    Decimal     @db.Decimal(10, 2)
-  shippingFee Decimal     @db.Decimal(10, 2)
-  totalAmount Decimal     @db.Decimal(10, 2)
+  subtotal    Int      // Stored in cents
+  shippingFee Int      // Stored in cents
+  totalAmount Int      // Stored in cents
   
   // Shipping
   shippingAddress String
@@ -130,8 +116,8 @@ model OrderItem {
   vendor      Vendor   @relation(fields: [vendorId], references: [id])
   
   quantity    Int
-  price       Decimal  @db.Decimal(10, 2)
-  subtotal    Decimal  @db.Decimal(10, 2)
+  price       Int      // Stored in cents
+  subtotal    Int      // Stored in cents
   
   // Vendor-managed returns
   returnRequested Boolean @default(false)
@@ -176,9 +162,9 @@ model Settlement {
   vendor      Vendor   @relation(fields: [vendorId], references: [id])
   
   period      String   // YYYY-MM
-  totalSales  Decimal  @db.Decimal(10, 2)
-  commission  Decimal  @db.Decimal(10, 2)
-  netAmount   Decimal  @db.Decimal(10, 2)
+  totalSales  Int      // Stored in cents
+  commission  Int      // Stored in cents
+  netAmount   Int      // Stored in cents
   
   status      String   @default("PENDING") // PENDING, PAID
   
