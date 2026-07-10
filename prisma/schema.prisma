@@ -170,4 +170,6 @@ model Settlement {
   
   createdAt   DateTime @default(now())
   paidAt      DateTime?
+  
+  @@unique([vendorId, period])
 }
